@@ -2,7 +2,7 @@
 
 Aplikasi Full Stack Web untuk pembayaran tagihan rekening air PDAM (PDAM Sidoarjo & PDAM Bondowoso) yang terintegrasi dengan Biller Sandbox Rajabiller, penyimpanan transaksi ke database MySQL, antarmuka responsif berbasis Tailwind CSS, serta fitur pratinjau, cetak, dan unduh struk pembayaran sah.
 
-Proyek ini dibuat untuk memenuhi spesifikasi **Full Stack Dev Test — PT. Bimasakti Multi Sinergi (Div. Innovation & Technology, Rev 2.1.3)**.
+Proyek ini dibuat untuk memenuhi spesifikasi **Full Stack Dev Test — PT. Bimasakti Multi Sinergi
 
 ---
 
