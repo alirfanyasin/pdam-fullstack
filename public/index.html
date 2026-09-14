@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDAM - Bimasakti Multi Sinergi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body
+    class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased"
+  >
+    <!-- Header -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <nav
+          class="flex space-x-2 bg-slate-100 p-1 rounded-xl text-sm font-medium"
+        >
+          <button
+            id="tab-btn-payment"
+            onclick="switchTab('payment')"
+            class="px-4 py-1.5 rounded-lg transition-all bg-white text-sky-700 shadow-sm font-semibold"
+          >
+            Pembayaran Tagihan
+          </button>
+          <button
+            id="tab-btn-history"
+            onclick="switchTab('history')"
+            class="px-4 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900"
+          >
+            Riwayat Transaksi
+          </button>
+        </nav>
+      </div>
+    </div>
+    <!-- Notification Toast Container (Top Center) -->
+    <div
+      id="toast-container"
+      class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center space-y-2 max-w-md w-full px-4 pointer-events-none"
+    ></div>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+      <section id="tab-payment" class="space-y-6">
+        <!-- Form Card -->
+        <div
+          class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+        >
+          <div
+            class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex flex-wrap justify-between items-center gap-2"
+          >
+            <div>
+              <h2 class="text-base font-semibold text-slate-900">
+                Cek Tagihan Rekening Air (Inquiry)
+              </h2>
+              <p class="text-xs text-slate-500">
+                Pilih produk PDAM dan masukkan nomor ID Pelanggan Anda
+              </p>
+            </div>
+            <!-- Quick test helpers -->
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-slate-400">ID Uji Coba:</span>
+              <button
+                type="button"
+                onclick="quickFill('WASDA', '01002676')"
+                class="px-2.5 py-1 rounded-md font-medium transition-colors border border-slate-200"
+              >
+                Sidoarjo (01002676)
+              </button>
+              <button
+                type="button"
+                onclick="quickFill('WABONDO', '09000879')"
+                class="px-2.5 py-1 rounded-md font-medium transition-colors border border-slate-200"
+              >
+                Bondowoso (09000879)
+              </button>
+            </div>
+          </div>
+
+          <form id="form-inquiry" onsubmit="handleInquiry(event)" class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Pilihan Produk -->
+              <div>
+                <label
+                  for="product_code"
+                  class="block text-sm font-medium text-slate-700 mb-1.5"
+                  >Nama PDAM / Wilayah</label
+                >
+                <select
+                  id="product_code"
+                  required
+                  class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                >
+                  <option value="WASDA">PDAM SIDOARJO (WASDA)</option>
+                  <option value="WABONDO">PDAM BONDOWOSO (WABONDO)</option>
+                </select>
+              </div>
+
+              <!-- Input ID Pelanggan -->
+              <div>
+                <label
+                  for="customer_id"
+                  class="block text-sm font-medium text-slate-700 mb-1.5"
+                  >Nomor ID Pelanggan</label
+                >
+                <div class="relative">
+                  <input
+                    type="text"
+                    id="customer_id"
+                    required
+                    placeholder="Contoh: 01002676"
+                    class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+              <button
+                type="submit"
+                id="btn-inquiry"
+                class="inline-flex items-center px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition-colors shadow-sm shadow-sky-500/20 disabled:opacity-50"
+              >
+                <svg
+                  id="icon-search"
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <svg
+                  id="icon-spinner-inq"
+                  class="w-4 h-4 mr-2 animate-spin hidden"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  ></path>
+                </svg>
+                <span>Periksa Tagihan</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- INQUIRY RESULT CONTAINER -->
+        <div id="inquiry-result-container" class="hidden space-y-6">
+          <!-- Info & Rincian Tagihan Card -->
+          <div
+            class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+          >
+            <div
+              class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"
+            >
+              <div class="flex items-center space-x-2">
+                <span
+                  class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-600 text-white text-xs font-bold"
+                  >1</span
+                >
+                <h3 class="font-semibold text-slate-900 text-sm">
+                  Hasil Inquiry Tagihan
+                </h3>
+              </div>
+            </div>
+
+            <div class="p-6 space-y-6">
+              <!-- Customer Meta Info Grid -->
+              <div
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm"
+              >
+                <div>
+                  <span class="text-xs text-slate-500 block"
+                    >Nama Pelanggan</span
+                  >
+                  <span id="res-nama" class="font-semibold text-slate-900"
+                    >-</span
+                  >
+                </div>
+                <div>
+                  <span class="text-xs text-slate-500 block"
+                    >ID Pelanggan / No. Meter</span
+                  >
+                  <span
+                    id="res-meter"
+                    class="font-semibold text-slate-900 font-mono"
+                    >-</span
+                  >
+                </div>
+                <div>
+                  <span class="text-xs text-slate-500 block">Wilayah PAM</span>
+                  <span id="res-pam" class="font-semibold text-slate-900"
+                    >-</span
+                  >
+                </div>
+                <div>
+                  <span class="text-xs text-slate-500 block">Alamat</span>
+                  <span
+                    id="res-alamat"
+                    class="font-semibold text-slate-900 line-clamp-1"
+                    title=""
+                    >-</span
+                  >
+                </div>
+              </div>
+
+              <!-- Table of Monthly Bills (data_bill) -->
+              <div>
+                <h4
+                  class="text-sm font-semibold text-slate-900 mb-3 flex items-center justify-between"
+                >
+                  <span>Rincian Tagihan Bulanan</span>
+                  <span
+                    id="res-periode-count"
+                    class="text-xs font-normal text-slate-500"
+                    >0 Periode</span
+                  >
+                </h4>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                  <table class="w-full text-sm text-left">
+                    <thead
+                      class="text-xs text-slate-600 uppercase bg-slate-100/75 border-b border-slate-200"
+                    >
+                      <tr>
+                        <th class="px-4 py-3">Periode</th>
+                        <th class="px-4 py-3 text-right">Stand Meter</th>
+                        <th class="px-4 py-3 text-right">Tagihan Air</th>
+                        <th class="px-4 py-3 text-right">Denda</th>
+                        <th class="px-4 py-3 text-right">Beban / Non-Air</th>
+                        <th class="px-4 py-3 text-right">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody
+                      id="res-bill-rows"
+                      class="divide-y divide-slate-200 bg-white"
+                    >
+                      <!-- Dynamic Rows -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Price Breakdown Summary -->
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end pt-4 border-t border-slate-200"
+              >
+                <div class="text-xs text-slate-500 space-y-1">
+                  <p>
+                    • Transaksi ini menggunakan ID Referensi Biller:
+                    <span
+                      id="res-ref2"
+                      class="font-mono font-medium text-slate-700"
+                      >-</span
+                    >
+                  </p>
+                  <p>
+                    • No. Referensi Sistem:
+                    <span
+                      id="res-ref1"
+                      class="font-mono font-medium text-slate-700"
+                      >-</span
+                    >
+                  </p>
+                </div>
+
+                <div
+                  class="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100"
+                >
+                  <div class="flex justify-between text-sm text-slate-600">
+                    <span>Nominal Tagihan Air:</span>
+                    <span
+                      id="res-sum-nominal"
+                      class="font-mono font-medium text-slate-900"
+                      >Rp 0</span
+                    >
+                  </div>
+                  <div class="flex justify-between text-sm text-slate-600">
+                    <span>Biaya Administrasi:</span>
+                    <span
+                      id="res-sum-admin"
+                      class="font-mono font-medium text-slate-900"
+                      >Rp 0</span
+                    >
+                  </div>
+                  <div
+                    class="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-200"
+                  >
+                    <span>Total Tagihan:</span>
+                    <span
+                      id="res-sum-total"
+                      class="font-mono text-sky-600 text-lg"
+                      >Rp 0</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Action Buttons -->
+              <div
+                class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-slate-200"
+              >
+                <button
+                  type="button"
+                  onclick="cancelInquiry()"
+                  class="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 font-medium transition-colors"
+                >
+                  Batal
+                </button>
+
+                <button
+                  type="button"
+                  id="btn-payment"
+                  onclick="handlePayment()"
+                  class="inline-flex items-center px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors shadow-sm shadow-emerald-500/20 disabled:opacity-50"
+                >
+                  <svg
+                    id="icon-pay"
+                    class="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  <svg
+                    id="icon-spinner-pay"
+                    class="w-4 h-4 mr-2 animate-spin hidden"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    ></path>
+                  </svg>
+                  <span>Konfirmasi & Bayar Sekarang</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pembayaran sukses card -->
+        <div
+          id="payment-success-card"
+          class="hidden bg-white rounded-2xl shadow-sm p-6 overflow-hidden"
+        >
+          <div class="flex items-start space-x-4">
+            <div
+              class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"
+            >
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <div class="flex-1 space-y-1">
+              <h3 class="text-lg font-bold text-slate-900">
+                Pembayaran Berhasil!
+              </h3>
+              <p class="text-sm text-slate-600">
+                Tagihan PDAM telah berhasil dilunasi. Transaksi telah tercatat
+                di sistem.
+              </p>
+
+              <div
+                class="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-wrap items-center justify-between gap-3 text-sm"
+              >
+                <div>
+                  <span class="text-xs text-slate-500 block"
+                    >No. Resi Transaksi</span
+                  >
+                  <span
+                    id="succ-resi"
+                    class="font-mono font-semibold text-slate-900"
+                    >-</span
+                  >
+                </div>
+                <div>
+                  <span class="text-xs text-slate-500 block"
+                    >Total Pembayaran</span
+                  >
+                  <span
+                    id="succ-total"
+                    class="font-mono font-bold text-emerald-600"
+                    >-</span
+                  >
+                </div>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onclick="previewReceiptCurrent()"
+                    class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5 mr-1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                    Lihat Struk
+                  </button>
+                  <button
+                    type="button"
+                    onclick="downloadReceiptCurrent()"
+                    class="inline-flex items-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors border border-slate-300"
+                  >
+                    <svg
+                      class="w-3.5 h-3.5 mr-1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                    Unduh .txt
+                  </button>
+                  <button
+                    type="button"
+                    onclick="resetAll()"
+                    class="inline-flex items-center px-3 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium"
+                  >
+                    Transaksi Baru
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Riwayat transaksi -->
+      <section id="tab-history" class="hidden space-y-6">
+        <div
+          class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+        >
+          <div
+            class="p-6 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4"
+          >
+            <div>
+              <h2 class="text-base font-semibold text-slate-900">
+                Riwayat Transaksi
+              </h2>
+              <p class="text-xs text-slate-500">
+                Daftar seluruh transaksi inquiry dan payment yang tersimpan di
+                database
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <!-- Filter Produk -->
+              <select
+                id="history-filter-product"
+                onchange="loadHistory()"
+                class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs bg-white text-slate-700 focus:ring-1 focus:ring-sky-500"
+              >
+                <option value="">Semua PDAM</option>
+                <option value="WASDA">PDAM Sidoarjo</option>
+                <option value="WABONDO">PDAM Bondowoso</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- History Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead
+                class="text-xs text-slate-600 uppercase bg-slate-50 border-b border-slate-200"
+              >
+                <tr>
+                  <th class="px-5 py-3">Waktu</th>
+                  <th class="px-5 py-3">Produk</th>
+                  <th class="px-5 py-3">ID Pelanggan / Nama</th>
+                  <th class="px-5 py-3 text-right">Total Bayar</th>
+                  <th class="px-5 py-3 text-center">Status</th>
+                  <th class="px-5 py-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody
+                id="history-table-body"
+                class="divide-y divide-slate-100 bg-white"
+              >
+                <tr>
+                  <td
+                    colspan="6"
+                    class="px-5 py-8 text-center text-slate-400 text-sm"
+                  >
+                    Memuat riwayat transaksi...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal struk pembayaran -->
+    <div
+      id="receipt-modal"
+      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]"
+      >
+        <div
+          class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"
+        >
+          <h3 class="font-bold text-slate-900 text-sm flex items-center">
+            <svg
+              class="w-4 h-4 mr-2 text-sky-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Pratinjau Struk Pembayaran
+          </h3>
+          <button
+            type="button"
+            onclick="closeReceiptModal()"
+            class="text-slate-400 hover:text-slate-600 p-1"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Thermal Paper Monospace Container -->
+        <div class="p-6 overflow-y-auto bg-slate-100 flex justify-center">
+          <div
+            id="receipt-print-area"
+            class="w-full bg-white p-5 rounded-lg shadow-sm border border-slate-200"
+          >
+            <pre
+              id="receipt-content"
+              class="font-mono text-xs text-slate-900 leading-relaxed whitespace-pre font-medium"
+            ></pre>
+          </div>
+        </div>
+
+        <div
+          class="px-6 py-3 border-t border-slate-100 bg-white flex justify-end space-x-2"
+        >
+          <button
+            type="button"
+            id="modal-btn-download"
+            class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center"
+          >
+            <svg
+              class="w-3.5 h-3.5 mr-1.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            Unduh .txt
+          </button>
+          <button
+            type="button"
+            onclick="closeReceiptModal()"
+            class="px-4 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
