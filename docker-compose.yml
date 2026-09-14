@@ -1,0 +1,45 @@
+version: "1.0"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: pdam_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: pdam_test
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
+    networks:
+      - pdam_network
+
+  app:
+    build: .
+    container_name: pdam_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: pdam_test
+      RAJABILLER_URL: https://c-dev-partnerlink.rajabiller.com/json/index.php
+      RAJABILLER_UID: SP300203
+      RAJABILLER_PIN: 311575
+    depends_on:
+      - db
+    networks:
+      - pdam_network
+
+volumes:
+  db_data:
+
+networks:
+  pdam_network:
+    driver: bridge
